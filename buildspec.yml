@@ -6,10 +6,7 @@ phases:
       - ansible --version
       - packer --version
       - aws --version
-  pre_build:
-    commands:
-      - /bin/sh scripts/setup.sh
   build:
     commands:
-      - echo "$ANSIBLE_VAULT_PASS" > vault_password_file
+      - echo "$VAULT_PASS" > vault_password_file
       - /bin/sh scripts/run.sh
