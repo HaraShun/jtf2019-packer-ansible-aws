@@ -1,0 +1,84 @@
+{
+  "builders": [
+    {
+      "ami_description": "Windows 2016 AMI image created by Packer",
+      "ami_name": "win2016-base-ami-{{timestamp | clean_resource_name}}",
+      "iam_instance_profile": "packer-ec2-role",
+      "instance_type": "t3.medium",
+      "vpc_id": "vpc-XXXXXXXXXXXXXXX",
+      "subnet_id": "subnet-XXXXXXXXXX",
+      "region": "ap-northeast-1",
+      "type": "amazon-ebs",
+      "user_data_file": "win-userdata.txt",
+      "communicator": "winrm",
+      "winrm_username": "Administrator",
+      "source_ami_filter": {
+        "filters": {
+          "virtualization-type": "hvm",
+          "name": "*Windows_Server-2016-Japanese-Full-Base-*",
+          "root-device-type": "ebs"
+        },
+        "owners": "amazon",
+        "most_recent": true
+      },
+      "tags": {
+        "Base_AMI_Name": "{{ .SourceAMIName }}",
+        "Extra": "{{ .SourceAMITags.TagName }}",
+        "Packer": "true",
+        "Release": "Latest"
+      },
+      "run_tags": {
+        "Packer": "true"
+      },
+      "run_volume_tags": {
+        "Packer": "true"
+      }
+    }
+  ],
+  "provisioners": [
+    {
+      "type":  "ansible",
+      "playbook_file": "./ansible/site.yml",
+      "extra_arguments": [
+        "--connection", "packer", "-v",
+        "--extra-vars", "ansible_shell_type=powershell ansible_shell_executable=None",
+        "--vault-password-file={{user `vault_path`}}"
+      ]
+    },
+    {
+      "type": "powershell",
+      "inline": [
+        "mkdir C:\\tmp"
+      ]
+    },
+    {
+      "type": "powershell",
+      "inline": [
+          "Import-Module -name AWSPowerShell",
+          "Copy-S3Object -BucketName バケット名 -Key ファイル名 -LocalFile C:\\tmp\\保存ファイル名"      
+      ]
+    },
+    {
+      "type": "windows-restart",
+      "restart_check_command": "powershell -command \"& {Write-Output 'restarted.'}\""
+    },
+    {
+      "type":  "ansible",
+      "playbook_file": "./ansible/after_reboot.yml",
+      "extra_arguments": [
+        "--connection", "packer", "-v",
+        "--extra-vars", "ansible_shell_type=powershell ansible_shell_executable=None",
+        "--vault-password-file={{user `vault_path`}}"
+      ]
+    },
+    {
+      "type": "powershell",
+      "scripts": [
+        "powershell/sysprep.ps1"
+      ]
+    }
+  ],
+  "variables": {
+    "vault_path": "vault_password_file"
+  }
+}

@@ -1,0 +1,51 @@
+---
+- hosts: all
+  tasks:
+    - name: Ensure local user for ansible is present
+      win_user:
+        name: ansible
+        fullname: ansible
+        description: 'Ansible用ユーザ'
+        password: '@nsible01'
+        password_never_expires: yes
+        state: present
+        groups:
+          - Administrators
+
+    - name: Disable password expirartion
+      win_security_policy:
+       section: System Access
+       key: MaximumPasswordAge
+       value: -1
+
+    - name: Disable password complexity requirement
+      win_security_policy:
+       section: System Access
+       key: PasswordComplexity
+       value: 0
+
+    - name: Replace the entries of Allowed Shutdown Execution User/Group
+      win_user_right:
+        name: SeShutdownPrivilege
+        users:
+        - Administrators
+        action: set
+
+    - name: Change power plan to high performance
+      win_power_plan:
+        name: '高パフォーマンス'
+
+    - name: Disable Windows Firewall
+      win_firewall:
+        state: disabled
+        profiles:
+          - Domain
+          - Private
+          - Public
+
+    - name: Install SNMP service
+      win_feature:
+        name: SNMP-Service
+        include_management_tools: yes
+        include_sub_features: yes
+        state: present
