@@ -72,6 +72,19 @@
       ]
     },
     {
+      "type": "file",
+      "source": "powershell/ConfigureRemotingForAnsible.ps1",
+      "destination": "C:\\tmp\\ConfigureRemotingForAnsible.ps1"
+    },
+    {
+      "type": "powershell",
+      "inline": [
+        "C:\\tmp\\ConfigureRemotingForAnsible.ps1 -SkipNetworkProfileChec -CertValidityDays 3650",
+        "rm C:\\tmp -Recurse"
+      ]
+    },
+
+    {
       "type": "powershell",
       "scripts": [
         "powershell/sysprep.ps1"
